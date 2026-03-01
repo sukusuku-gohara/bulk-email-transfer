@@ -2,52 +2,260 @@
 
 記事の本文を入力するだけで、Geminiが魅力的なアイキャッチ画像の「アイデア出し」から「ラフ制作」、そして「最高品質の本番画像生成（Imagen 3 等）」までを一気通貫で行うWebアプリケーションです。
 
-## 技術スタック
-- **Frontend**: Next.js (App Router), React, Tailwind CSS
-- **Backend**: Next.js API Routes (Node.js/TypeScript)
-- **AI Models**:
-  - Text Generation: `gemini-2.5-flash` (アイデア生成、プロンプト構築)
-  - Rough Images: `gemini-2.5-flash-image` (Nano Banana - ラフ画像3枚)
-  - Final Image: `gemini-3-pro-image-preview` (Nano Banana Pro - 高品質本番画像)
-- **Validation**: AJV (JSON Schema verification)
-- **Storage**: Local JSON File (`.data/jobs.json`) ※ MVP版仕様
+## 📋 目次
 
-## セットアップ手順
+- [クイックスタート](#クイックスタート)
+- [使い方ガイド](#使い方ガイド)
+- [技術スタック](#技術スタック)
+- [セキュリティ](#セキュリティ)
+- [注意点](#注意点)
 
-1. 依存関係のインストール
+---
+
+## 🚀 クイックスタート
+
+### 1. インストール
+
 ```bash
 npm install
 ```
 
-2. 環境変数の設定
-プロジェクト直下に `.env.local` ファイルを作成し、以下の内容を記述してください。
+### 2. 環境変数の設定
+
+プロジェクト直下に `.env.local` ファイルを作成し、以下を記述します：
+
 ```env
-GEMINI_API_KEY=あなたのGemini_APIキーをここに入力
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
-3. 開発用サーバーの起動
+[Google AI Studio](https://aistudio.google.com) から無料のAPIキーを取得できます。
+
+### 3. 開発サーバーの起動
+
 ```bash
 npm run dev
 ```
 
-ブラウザで `http://localhost:3000` にアクセスしてください。
+ブラウザで `http://localhost:3000` を開いてください。
 
-## アーキテクチャとPrompt Registry
-プロンプトは全て `prompts/` ディレクトリ配下のMarkdownとしてバージョン管理されています。
-出力するJSON Schemaの定義は `schemas/` フォルダで管理され、バックエンドで一貫して検証（バリデーション・リトライ処理）が行われます。これにより「生成されたJSONが壊れていて画面が崩れる」ことを強力に防いでいます。
+---
 
-- **Step A**: アイデア抽出 (`stepA_ideation.md`)
-- **Step B**: ラフ用指示 (`stepB_rough_image.md`)
-- **Step C**: システムプロンプト作成 (`stepC_system_prompt_ja.md`)
-- **Step D**: 本番用パラメータ作成 (`stepD_final_json.md`)
+## 💡 使い方ガイド
 
-## セキュリティ対策
-- **APIキー漏洩防止**: クライアント（ブラウザ）からは直接Gemini APIを叩かず、必ず `/api/workflows/*` を経由するサーバーサイド実行としています。
-- **プロンプトインジェクション対策**: `prompts/common_system.md` により、入力された記事本文内に不可視の命令が含まれていても実行しない強力な制約を定義しています。
+このアプリケーションは **5つのステップ** でアイキャッチ画像を生成します。
 
-## 免責・注意点
-- アプリケーションを実行するとローカルに `.data/jobs.json` が生成され保存されます。
-- 無料枠のAI Studio APIキーを利用する場合、高頻度でアクセスするとレートリミット（429エラー）が発生する可能性があるので注意してください。ラフ画生成（Step B）はシーケンシャルに呼び出し負荷を抑える工夫をしています。
-- 必要に応じて、以下のモデル指定箇所をお使いのGCPプロジェクトやAPIプランに合わせて変更してください：
-  - `src/lib/gemini/client.ts`: テキスト生成（`gemini-2.5-flash`）、ラフ画像（`gemini-2.5-flash-image`）
-  - `src/app/api/workflows/finalImage/route.ts`: 最終画像（`gemini-3-pro-image-preview`）
+### ステップ1️⃣ 入力（Step 1: Input）
+
+**入力画面** では以下の情報を入力します：
+
+- **記事本文** ※必須
+  - アイキャッチ画像のテーマになる記事の内容を入力します
+  - 詳しい説明ほど、より正確なアイデアが生成されます
+
+- **タイトル** （オプション）
+  - 記事のタイトルを入力すると、より関連性の高い画像が生成されます
+
+- **トーン** （オプション）
+  - 例：`ビジネス向け`、`ポップ`、`シンプル`、`豪華` など
+  - 画像の雰囲気を指定できます
+
+- **禁止要素** （オプション）
+  - 画像に含めたくない要素を指定します
+  - 例：`テキスト`、`人物`、`背景に色` など
+
+- **ブランドガイドライン** （オプション）
+  - ブランドの色やスタイルについての指示を入力します
+
+- **参考画像** （オプション）
+  - PNG/WebP形式（最大10MB）
+  - Geminiがこの画像を参考にしてアイデアを生成します
+
+**「次へ進む」** をクリックするとAIが処理を開始します。
+
+---
+
+### ステップ2️⃣ アイデア生成（Step 2: Ideation）
+
+Geminiが **3つのコンセプト** を自動生成します。
+
+各コンセプトには以下が含まれます：
+- **コンセプト名** - 画像の概要
+- **説明** - なぜこのコンセプトが適しているか
+- **視覚要素** - 含まれる主要な要素
+
+各コンセプトは詳しく確認してから、気に入ったものを選択してください。
+
+---
+
+### ステップ3️⃣ ラフ画像生成（Step 3: Rough Images）
+
+選択したコンセプトに基づいて、**3枚のラフ画像** が生成されます。
+
+- 生成には約30〜60秒かかります
+- これらのラフから最終的な方向性を決めます
+- 「Roughの確認と選択」で、最も良いものを選択してください
+
+---
+
+### ステップ4️⃣ システムプロンプト作成（Step 4: System Prompt）
+
+選択したラフ画像に基づいて、**詳細な生成指示** が自動作成されます。
+
+このステップでは：
+- Geminiが日本語で詳細なシステムプロンプトを生成
+- 画像生成モデルが理解しやすい形式に最適化されます
+- 最終画像の品質に大きく影響します
+
+---
+
+### ステップ5️⃣ 最終画像生成（Step 5: Final Image）
+
+**高品質な最終画像** が生成されます。
+
+- 生成には約30〜90秒かかります
+- `gemini-3-pro-image-preview` による高品質生成
+- 完成した画像は以下の方法で保存できます：
+  - 右クリック → 「名前を付けて画像を保存」
+  - ブラウザのダウンロード機能
+
+---
+
+## 🛠️ 技術スタック
+
+| レイヤー | 技術 |
+|---------|------|
+| **Frontend** | Next.js 16.1 (App Router), React 19, Tailwind CSS 4 |
+| **Backend** | Next.js API Routes (Node.js/TypeScript) |
+| **AI Models** | Gemini 2.5 Flash, Gemini 3 Pro Image |
+| **検証** | AJV (JSON Schema) |
+| **UI Icons** | lucide-react |
+
+### Gemini APIの利用内訳
+
+| ステップ | モデル | 処理内容 |
+|---------|--------|---------|
+| Step A | `gemini-2.5-flash` | テキスト生成（アイデア3案） |
+| Step B | `gemini-2.5-flash-image` | 画像生成（ラフ画像3枚） |
+| Step C | `gemini-2.5-flash` | テキスト生成（システムプロンプト） |
+| Step D | `gemini-2.5-flash` | テキスト生成（最終パラメータ） |
+| Step E | `gemini-3-pro-image-preview` | 画像生成（最終高品質画像） |
+
+---
+
+## 🔒 セキュリティ
+
+- **APIキー保護**: ブラウザからの直接API呼び出しはなく、すべてサーバーサイドで実行
+- **プロンプトインジェクション対策**: システムプロンプトに強力な制約を設定
+- **入力検証**: JSON Schemaによる厳密なバリデーション
+- **エラーハンドリング**: 失敗時は自動リトライ
+
+---
+
+## アーキテクチャ詳細
+
+### Prompt Registry
+
+プロンプトはすべて `prompts/` ディレクトリでバージョン管理されています：
+
+```
+prompts/
+├── stepA_ideation.md          # アイデア生成用プロンプト
+├── stepB_rough_image.md       # ラフ画像生成用プロンプト
+├── stepC_system_prompt_ja.md  # システムプロンプト作成用
+├── stepD_final_json.md        # 最終パラメータ作成用
+└── common_system.md           # 共通システムプロンプト
+```
+
+### Schema Validation
+
+JSON Schemaは `schemas/` ディレクトリで定義し、AJVで厳密に検証：
+
+```
+schemas/
+├── schemaA_ideation.json
+├── schemaB_rough_prompts.json
+├── schemaC_system_prompt.json
+└── schemaD_final_json.json
+```
+
+---
+
+## ⚠️ 注意点
+
+### API使用量とレート制限
+
+- 無料のAI Studio APIキーには**レート制限**があります
+- 多くのリクエストを送ると `429 Too Many Requests` エラーが発生する可能性があります
+- **ラフ画生成はシーケンシャル実行**で負荷を抑えています
+
+### モデルのカスタマイズ
+
+APIプランやプロジェクトに合わせてモデルを変更できます：
+
+```typescript
+// src/lib/gemini/client.ts
+const MODEL = 'gemini-2.5-flash';  // テキスト生成モデル
+
+// src/app/api/workflows/finalImage/route.ts
+const IMAGE_MODEL = 'gemini-3-pro-image-preview';  // 画像生成モデル
+```
+
+### ファイルサイズ制限
+
+- アップロード画像: PNG/WebP形式、最大10MB
+
+### ブラウザ互換性
+
+- Chrome, Firefox, Safari, Edge（最新版推奨）
+- モバイルブラウザでも利用可能
+
+### Vercel デプロイ時の注意
+
+- このアプリケーションはVercelでのステートレス実行に対応しています
+- Vercel環境では生成履歴機能は利用できません（各リクエストが異なるコンテナで実行されるため）
+
+---
+
+## 📦 ビルドとデプロイ
+
+### ビルド
+
+```bash
+npm run build
+```
+
+### 本番実行
+
+```bash
+npm start
+```
+
+### Vercel へのデプロイ
+
+```bash
+vercel deploy
+```
+
+---
+
+## 📝 トラブルシューティング
+
+| 問題 | 解決方法 |
+|------|---------|
+| `GEMINI_API_KEY is not defined` | `.env.local` ファイルが存在するか、正しいAPIキーが設定されているか確認 |
+| `429 Too Many Requests` | 少し時間を置いてからリトライしてください |
+| 画像がアップロードできない | PNG/WebP形式、10MB以下であることを確認 |
+| ステップが進まない | ブラウザのコンソール（F12）でエラーを確認してください |
+| 画像生成が遅い | Gemini APIのレート制限の影響の可能性があります |
+
+---
+
+## 📞 サポート
+
+バグ報告や機能改善の提案は、GitHubのIssuesセクションまでお願いします。
+
+---
+
+## 📄 ライセンス
+
+MIT
