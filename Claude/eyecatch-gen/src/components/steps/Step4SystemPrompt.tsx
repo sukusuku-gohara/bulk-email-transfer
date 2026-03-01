@@ -5,10 +5,12 @@ import { fetchApi } from '@/lib/api';
 export default function Step4SystemPrompt({
     jobId,
     systemPromptJa,
+    inputs,
     onNext
 }: {
     jobId: string,
     systemPromptJa: string,
+    inputs: any,
     onNext: (finalAsset: string, finalJson: any) => void
 }) {
     const [loading, setLoading] = useState(false);
@@ -33,8 +35,12 @@ export default function Step4SystemPrompt({
                 customPrompt: editedPrompt
             });
 
-            // 2. Generate Final Image
-            const imgRes = await fetchApi('/api/workflows/finalImage', { jobId });
+            // 2. Generate Final Image (pass finalPromptJson and referenceImage directly)
+            const imgRes = await fetchApi('/api/workflows/finalImage', {
+                jobId,
+                finalPromptJson: jsonRes.finalPromptJson,
+                referenceImage: inputs?.referenceImage
+            });
 
             onNext(imgRes.finalAsset, jsonRes.finalPromptJson);
         } catch (err: any) {

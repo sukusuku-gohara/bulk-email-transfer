@@ -11,6 +11,7 @@ export default function Home() {
   const [step, setStep] = useState(1);
   const [jobId, setJobId] = useState("");
   const [ideation, setIdeation] = useState<any>(null);
+  const [originalInputs, setOriginalInputs] = useState<any>(null);
   const [roughs, setRoughs] = useState<string[]>([]);
   const [systemPromptJa, setSystemPromptJa] = useState("");
   const [finalAsset, setFinalAsset] = useState("");
@@ -42,16 +43,16 @@ export default function Home() {
 
       <main className="pt-32 pb-24 px-6 sm:px-12">
         {step === 1 && (
-          <Step1Input onNext={(id, data) => { setJobId(id); setIdeation(data); setStep(2); }} />
+          <Step1Input onNext={(id, data, inputs) => { setJobId(id); setIdeation(data); setOriginalInputs(inputs); setStep(2); }} />
         )}
         {step === 2 && (
-          <Step2Ideation jobId={jobId} ideationJson={ideation} onNext={(assets) => { setRoughs(assets); setStep(3); }} />
+          <Step2Ideation jobId={jobId} ideationJson={ideation} inputs={originalInputs} onNext={(assets) => { setRoughs(assets); setStep(3); }} />
         )}
         {step === 3 && (
-          <Step3Rough jobId={jobId} ideationJson={ideation} roughAssets={roughs} onNext={(sys, cid) => { setSystemPromptJa(sys); setStep(4); }} />
+          <Step3Rough jobId={jobId} ideationJson={ideation} roughAssets={roughs} inputs={originalInputs} onNext={(sys, cid) => { setSystemPromptJa(sys); setStep(4); }} />
         )}
         {step === 4 && (
-          <Step4SystemPrompt jobId={jobId} systemPromptJa={systemPromptJa} onNext={(asset, json) => { setFinalAsset(asset); setFinalJson(json); setStep(5); }} />
+          <Step4SystemPrompt jobId={jobId} systemPromptJa={systemPromptJa} inputs={originalInputs} onNext={(asset, json) => { setFinalAsset(asset); setFinalJson(json); setStep(5); }} />
         )}
         {step === 5 && (
           <Step5Final

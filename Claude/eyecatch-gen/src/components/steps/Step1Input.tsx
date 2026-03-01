@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Loader2, Upload, X } from 'lucide-react';
 import { fetchApi } from '@/lib/api';
 
-export default function Step1Input({ onNext }: { onNext: (jobId: string, data: any) => void }) {
+export default function Step1Input({ onNext }: { onNext: (jobId: string, data: any, inputs: any) => void }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
@@ -68,7 +68,7 @@ export default function Step1Input({ onNext }: { onNext: (jobId: string, data: a
 
         try {
             const res = await fetchApi('/api/workflows/start', payload);
-            onNext(res.jobId, res.ideationJson);
+            onNext(res.jobId, res.ideationJson, payload);
         } catch (err: any) {
             setError(err.message);
         } finally {

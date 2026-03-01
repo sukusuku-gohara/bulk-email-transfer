@@ -3,17 +3,18 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { validateJob } from '../validator';
 
-const DATA_DIR = path.join(process.cwd(), '.data');
-const JOBS_FILE = path.join(DATA_DIR, 'jobs.json');
+const isVercel = !!process.env.VERCEL;
 
-// Ensure data dir exists
-if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-}
+// Vercel本番は /var/task が read-only なので、書き込み可能な /tmp を使う
+const DATA_DIR = isVercel
+    ? '/tmp/eyecatch-gen'
+    : path.join(process.cwd(), '.data');
 
-// Initialize jobs file if not exists
-if (!fs.existsSync(JOBS_FILE)) {
-    fs.writeFileSync(JOBS_FILE, JSON.stringify([]), 'utf-8');
+const JOBS_PATH = path.join(DATA_DIR, 'jobs.json');
+
+function ensureDataDir() {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    if (!fs.existsSync(JOBS_PATH)) fs.writeFileSync(JOBS_PATH, '[]', 'utf-8');
 }
 
 export type JobStatus = 'draft' | 'idea_generated' | 'rough_generated' | 'concept_selected' | 'prompt_generated' | 'completed' | 'error';
@@ -42,20 +43,17 @@ export interface Job {
 
 function readJobs(): Job[] {
     try {
-        const data = fs.readFileSync(JOBS_FILE, 'utf-8');
-        return JSON.parse(data) as Job[];
-    } catch (error) {
-        console.error('Failed to read jobs.json', error);
+        ensureDataDir();
+        const raw = fs.readFileSync(JOBS_PATH, 'utf-8');
+        return raw ? JSON.parse(raw) as Job[] : [];
+    } catch (e) {
         return [];
     }
 }
 
 function writeJobs(jobs: Job[]) {
-    try {
-        fs.writeFileSync(JOBS_FILE, JSON.stringify(jobs, null, 2), 'utf-8');
-    } catch (error) {
-        console.error('Failed to write jobs.json', error);
-    }
+    ensureDataDir();
+    fs.writeFileSync(JOBS_PATH, JSON.stringify(jobs, null, 2), 'utf-8');
 }
 
 export function createJob(inputs: Job['inputs']): Job {
@@ -83,28 +81,33 @@ export function getJobs(): Job[] {
     return readJobs();
 }
 
-export function updateJob(id: string, updates: Partial<Job>): Job {
-    const jobs = readJobs();
-    const jobIndex = jobs.findIndex(j => j.id === id);
-    if (jobIndex === -1) {
-        throw new Error(`Job not found: ${id}`);
+export function updateJob(id: string, updates: Partial<Job>): Job | null {
+    try {
+        const jobs = readJobs();
+        const jobIndex = jobs.findIndex(j => j.id === id);
+        if (jobIndex === -1) {
+            console.warn(`Job not found for update (may be different container): ${id}`);
+            return null;
+        }
+
+        const updatedJob = {
+            ...jobs[jobIndex],
+            ...updates,
+            updatedAt: Date.now()
+        };
+
+        // Validate updated job using AJV before saving
+        const isValid = validateJob(updatedJob);
+        if (!isValid) {
+            console.warn(`Job ${id} schema validation failed after update, but still saving.`);
+        }
+
+        jobs[jobIndex] = updatedJob;
+        writeJobs(jobs);
+
+        return updatedJob;
+    } catch (e) {
+        console.warn(`Failed to update job ${id}:`, e);
+        return null;
     }
-
-    const updatedJob = {
-        ...jobs[jobIndex],
-        ...updates,
-        updatedAt: Date.now()
-    };
-
-    // Validate updated job using AJV before saving
-    const isValid = validateJob(updatedJob);
-    if (!isValid) {
-        console.warn(`Job ${id} schema validation failed after update, but still saving.`);
-        // Or throw error depending on strictness
-    }
-
-    jobs[jobIndex] = updatedJob;
-    writeJobs(jobs);
-
-    return updatedJob;
 }

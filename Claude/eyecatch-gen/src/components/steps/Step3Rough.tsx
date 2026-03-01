@@ -6,11 +6,13 @@ export default function Step3Rough({
     jobId,
     ideationJson,
     roughAssets,
+    inputs,
     onNext
 }: {
     jobId: string,
     ideationJson: any,
     roughAssets: string[],
+    inputs: any,
     onNext: (systemPromptJa: string, selectedIdeaId: string) => void
 }) {
     const [loading, setLoading] = useState(false);
@@ -23,7 +25,13 @@ export default function Step3Rough({
         setError('');
         try {
             const selectedConceptId = ideationJson.ideas[selectedIdx].concept_id;
-            const res = await fetchApi('/api/workflows/select', { jobId, selectedConceptId });
+            const res = await fetchApi('/api/workflows/select', {
+                jobId,
+                selectedConceptId,
+                ideationJson,
+                title: inputs?.title,
+                bans: inputs?.bans
+            });
             onNext(res.systemPromptJa, selectedConceptId);
         } catch (err: any) {
             setError(err.message);
