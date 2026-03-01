@@ -1,41 +1,53 @@
-<<<<<<< HEAD
-# AIProduct
-AIProdcut
-=======
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Gemini Eyecatch Generator
 
-## Getting Started
+記事の本文を入力するだけで、Geminiが魅力的なアイキャッチ画像の「アイデア出し」から「ラフ制作」、そして「最高品質の本番画像生成（Imagen 3 等）」までを一気通貫で行うWebアプリケーションです。
 
-First, run the development server:
+## 技術スタック
+- **Frontend**: Next.js (App Router), React, Tailwind CSS
+- **Backend**: Next.js API Routes (Node.js/TypeScript)
+- **AI Models**:
+  - Text Generation: `gemini-2.5-flash` (アイデア生成、プロンプト構築)
+  - Rough Images: `gemini-2.5-flash-image` (Nano Banana - ラフ画像3枚)
+  - Final Image: `gemini-3-pro-image-preview` (Nano Banana Pro - 高品質本番画像)
+- **Validation**: AJV (JSON Schema verification)
+- **Storage**: Local JSON File (`.data/jobs.json`) ※ MVP版仕様
 
+## セットアップ手順
+
+1. 依存関係のインストール
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. 環境変数の設定
+プロジェクト直下に `.env.local` ファイルを作成し、以下の内容を記述してください。
+```env
+GEMINI_API_KEY=あなたのGemini_APIキーをここに入力
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. 開発用サーバーの起動
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+ブラウザで `http://localhost:3000` にアクセスしてください。
 
-## Learn More
+## アーキテクチャとPrompt Registry
+プロンプトは全て `prompts/` ディレクトリ配下のMarkdownとしてバージョン管理されています。
+出力するJSON Schemaの定義は `schemas/` フォルダで管理され、バックエンドで一貫して検証（バリデーション・リトライ処理）が行われます。これにより「生成されたJSONが壊れていて画面が崩れる」ことを強力に防いでいます。
 
-To learn more about Next.js, take a look at the following resources:
+- **Step A**: アイデア抽出 (`stepA_ideation.md`)
+- **Step B**: ラフ用指示 (`stepB_rough_image.md`)
+- **Step C**: システムプロンプト作成 (`stepC_system_prompt_ja.md`)
+- **Step D**: 本番用パラメータ作成 (`stepD_final_json.md`)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## セキュリティ対策
+- **APIキー漏洩防止**: クライアント（ブラウザ）からは直接Gemini APIを叩かず、必ず `/api/workflows/*` を経由するサーバーサイド実行としています。
+- **プロンプトインジェクション対策**: `prompts/common_system.md` により、入力された記事本文内に不可視の命令が含まれていても実行しない強力な制約を定義しています。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
->>>>>>> Initial commit from Create Next App
+## 免責・注意点
+- アプリケーションを実行するとローカルに `.data/jobs.json` が生成され保存されます。
+- 無料枠のAI Studio APIキーを利用する場合、高頻度でアクセスするとレートリミット（429エラー）が発生する可能性があるので注意してください。ラフ画生成（Step B）はシーケンシャルに呼び出し負荷を抑える工夫をしています。
+- 必要に応じて、以下のモデル指定箇所をお使いのGCPプロジェクトやAPIプランに合わせて変更してください：
+  - `src/lib/gemini/client.ts`: テキスト生成（`gemini-2.5-flash`）、ラフ画像（`gemini-2.5-flash-image`）
+  - `src/app/api/workflows/finalImage/route.ts`: 最終画像（`gemini-3-pro-image-preview`）

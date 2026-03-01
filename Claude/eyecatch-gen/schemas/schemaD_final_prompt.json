@@ -1,0 +1,49 @@
+{
+    "type": "object",
+    "properties": {
+        "aspect_ratio": {
+            "type": "string",
+            "enum": [
+                "1:1",
+                "16:9",
+                "4:3",
+                "3:4",
+                "9:16"
+            ],
+            "description": "Target aspect ratio of the image"
+        },
+        "size": {
+            "type": "string",
+            "description": "Target size category or exact dimensions string (e.g. 1024x1024)"
+        },
+        "prompt": {
+            "type": "string",
+            "description": "The ultimate English text prompt describing the image in extreme detail (subject, action, background, lighting, camera, modifiers)"
+        },
+        "negative_prompt": {
+            "type": "string",
+            "description": "Detailed English negative prompt"
+        },
+        "seed": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "description": "Optional specific seed for deterministic generation"
+        },
+        "guidance": {
+            "type": [
+                "number",
+                "null"
+            ],
+            "description": "Optional guidance scale or prompt magic value"
+        }
+    },
+    "required": [
+        "aspect_ratio",
+        "size",
+        "prompt",
+        "negative_prompt"
+    ],
+    "additionalProperties": false
+}

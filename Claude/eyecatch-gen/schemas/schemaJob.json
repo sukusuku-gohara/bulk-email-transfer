@@ -1,0 +1,108 @@
+{
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "string"
+        },
+        "status": {
+            "type": "string",
+            "enum": [
+                "draft",
+                "idea_generated",
+                "rough_generated",
+                "concept_selected",
+                "prompt_generated",
+                "completed",
+                "error"
+            ]
+        },
+        "inputs": {
+            "type": "object",
+            "properties": {
+                "article": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "tone": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "bans": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "brand_guideline": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "article"
+            ]
+        },
+        "ideationJson": {
+            "type": "object",
+            "nullable": true
+        },
+        "roughAssets": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "nullable": true
+        },
+        "selectedConceptId": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "systemPromptJa": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "finalPromptJson": {
+            "type": "object",
+            "nullable": true
+        },
+        "finalAsset": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "errors": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "nullable": true
+        },
+        "createdAt": {
+            "type": "number"
+        },
+        "updatedAt": {
+            "type": "number"
+        }
+    },
+    "required": [
+        "id",
+        "status",
+        "inputs",
+        "createdAt",
+        "updatedAt"
+    ]
+}

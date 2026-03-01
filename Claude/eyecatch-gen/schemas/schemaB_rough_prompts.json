@@ -1,0 +1,48 @@
+{
+    "type": "object",
+    "properties": {
+        "prompts": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "concept_id": {
+                        "type": "string",
+                        "description": "Reference to the concept_id from Step A"
+                    },
+                    "aspect_ratio": {
+                        "type": "string",
+                        "enum": [
+                            "1:1",
+                            "16:9",
+                            "4:3",
+                            "3:4",
+                            "9:16"
+                        ],
+                        "description": "Aspect ratio of the generated image"
+                    },
+                    "prompt": {
+                        "type": "string",
+                        "description": "High-quality, detailed English prompt for image generation, including subject, medium, style, lighting, and composition"
+                    },
+                    "negative_prompt": {
+                        "type": "string",
+                        "description": "Elements to exclude from the image, based on the 'dont' field"
+                    }
+                },
+                "required": [
+                    "concept_id",
+                    "aspect_ratio",
+                    "prompt",
+                    "negative_prompt"
+                ],
+                "additionalProperties": false
+            },
+            "description": "Image generation prompts for the provided ideas"
+        }
+    },
+    "required": [
+        "prompts"
+    ],
+    "additionalProperties": false
+}

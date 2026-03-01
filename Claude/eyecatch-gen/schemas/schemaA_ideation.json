@@ -1,0 +1,68 @@
+{
+    "type": "object",
+    "properties": {
+        "ideas": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "concept_id": {
+                        "type": "string",
+                        "description": "Unique identifier for this concept (e.g. concept-1)"
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "Short, catchy title for this eyecatch concept"
+                    },
+                    "visual": {
+                        "type": "string",
+                        "description": "Main visual description (what is happening in the scene)"
+                    },
+                    "motif": {
+                        "type": "string",
+                        "description": "Key elements, objects, or metaphors used"
+                    },
+                    "composition": {
+                        "type": "string",
+                        "description": "Camera angle, lighting, and layout"
+                    },
+                    "mood": {
+                        "type": "string",
+                        "description": "Color palette, atmosphere, and feeling"
+                    },
+                    "do": {
+                        "type": "string",
+                        "description": "What MUST be included or emphasized"
+                    },
+                    "dont": {
+                        "type": "string",
+                        "description": "What MUST NOT be included (negative elements)"
+                    },
+                    "short_copy": {
+                        "type": "string",
+                        "description": "A short promotional copy or text to be associated with this concept (not necessarily placed inside the image, but representing its essence)"
+                    }
+                },
+                "required": [
+                    "concept_id",
+                    "title",
+                    "visual",
+                    "motif",
+                    "composition",
+                    "mood",
+                    "do",
+                    "dont",
+                    "short_copy"
+                ],
+                "additionalProperties": false
+            },
+            "minItems": 3,
+            "maxItems": 3,
+            "description": "Exactly 3 eyecatch ideas"
+        }
+    },
+    "required": [
+        "ideas"
+    ],
+    "additionalProperties": false
+}
