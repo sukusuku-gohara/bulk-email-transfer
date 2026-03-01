@@ -1,0 +1,6 @@
+sa-key.json
+*.json
+!package.json
+.env
+.venv/
+__pycache__/
