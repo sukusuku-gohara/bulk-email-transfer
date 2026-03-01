@@ -1,14 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getJob, getJobs } from '@/lib/repository/jobStore';
+import { getJob } from '@/lib/repository/jobStore';
 
 export async function GET(req: Request, { params }: { params: Promise<{ jobId: string }> }) {
     try {
         const { jobId } = await params;
-
-        if (jobId === 'all') {
-            const allJobs = getJobs();
-            return NextResponse.json({ jobs: allJobs });
-        }
 
         const job = getJob(jobId);
         if (!job) {
