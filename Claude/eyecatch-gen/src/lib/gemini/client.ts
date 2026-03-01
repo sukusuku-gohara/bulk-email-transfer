@@ -173,13 +173,35 @@ IMPORTANT: The output image MUST be exactly ${aspectRatio} aspect ratio at 1920x
         }
     }
 
-    // Fallback: check direct inlineData
-    if (response.inlineData && response.inlineData.length > 0) {
-        const imageData = response.inlineData[0];
-        const mimeType = imageData.mimeType || 'image/jpeg';
-        const base64Image = imageData.data;
-        return `data:${mimeType};base64,${base64Image}`;
-    }
+// candidates がどこにあるかはSDKで異なるため、複数候補を順に見る
+const r: any = response as any;
 
-    throw new Error('No image returned from generation API. Response: ' + JSON.stringify(response));
+const candidates =
+  r?.candidates ??
+  r?.response?.candidates ??
+  r?.data?.candidates ??
+  r?.result?.candidates ??
+  [];
+
+const parts =
+  candidates?.[0]?.content?.parts ??
+  candidates?.[0]?.content?.[0]?.parts ??
+  candidates?.[0]?.parts ??
+  [];
+
+const inlinePart = (parts as any[]).find((p) => p?.inlineData);
+
+if (inlinePart?.inlineData) {
+  const imageData = inlinePart.inlineData;
+  const mimeType = imageData.mimeType || "image/jpeg";
+  const base64Image = imageData.data;
+
+  // ✅ 成功時はここで return する（あなたの関数の返り値に合わせて調整）
+  return base64Image;
+}
+
+// ❌ 画像が取れなかった場合だけ throw
+throw new Error(
+  "No image returned from generation API. Response: " + JSON.stringify(response)
+);
 }
