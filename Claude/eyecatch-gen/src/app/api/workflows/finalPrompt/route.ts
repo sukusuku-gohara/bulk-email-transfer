@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getJob, updateJob } from '@/lib/repository/jobStore';
+import { updateJob } from '@/lib/repository/jobStore';
 import { compilePrompt } from '@/lib/prompts';
 import { generateTextWithRetry } from '@/lib/gemini/client';
 import { validateFinalPrompt, FinalPromptResult } from '@/lib/validator';
@@ -11,28 +11,16 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { jobId, customPrompt } = body;
 
-        if (!jobId) {
-            return NextResponse.json({ error: 'jobId is required' }, { status: 400 });
-        }
-
-        const job = getJob(jobId);
-        if (!job) {
-            return NextResponse.json({ error: 'Job not found' }, { status: 404 });
-        }
-
-        if (!job.systemPromptJa && !customPrompt) {
-            return NextResponse.json({ error: 'Job does not have a system prompt yet' }, { status: 400 });
+        if (!customPrompt) {
+            return NextResponse.json({ error: 'customPrompt is required' }, { status: 400 });
         }
 
         const schemaPath = path.join(process.cwd(), 'schemas', 'schemaD_final_prompt.json');
         const schemaContent = fs.readFileSync(schemaPath, 'utf8');
 
-        // Use custom prompt if provided, otherwise use job's system prompt
-        const systemPromptToUse = customPrompt || job.systemPromptJa;
-
         // Compile Step D prompt
         const variables = {
-            SYSTEM_PROMPT_JA: systemPromptToUse,
+            SYSTEM_PROMPT_JA: customPrompt,
             SCHEMA: schemaContent
         };
 
@@ -49,13 +37,15 @@ export async function POST(req: Request) {
             }
         );
 
-        // Update Job
-        updateJob(job.id, {
-            status: 'prompt_generated',
-            finalPromptJson
-        });
+        // Update Job (best-effort for history - may fail on different container)
+        if (jobId) {
+            updateJob(jobId, {
+                status: 'prompt_generated',
+                finalPromptJson
+            });
+        }
 
-        return NextResponse.json({ jobId: job.id, finalPromptJson });
+        return NextResponse.json({ jobId, finalPromptJson });
     } catch (error: any) {
         console.error('Workflows finalPrompt error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });

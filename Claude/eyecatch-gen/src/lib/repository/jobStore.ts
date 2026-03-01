@@ -81,28 +81,33 @@ export function getJobs(): Job[] {
     return readJobs();
 }
 
-export function updateJob(id: string, updates: Partial<Job>): Job {
-    const jobs = readJobs();
-    const jobIndex = jobs.findIndex(j => j.id === id);
-    if (jobIndex === -1) {
-        throw new Error(`Job not found: ${id}`);
+export function updateJob(id: string, updates: Partial<Job>): Job | null {
+    try {
+        const jobs = readJobs();
+        const jobIndex = jobs.findIndex(j => j.id === id);
+        if (jobIndex === -1) {
+            console.warn(`Job not found for update (may be different container): ${id}`);
+            return null;
+        }
+
+        const updatedJob = {
+            ...jobs[jobIndex],
+            ...updates,
+            updatedAt: Date.now()
+        };
+
+        // Validate updated job using AJV before saving
+        const isValid = validateJob(updatedJob);
+        if (!isValid) {
+            console.warn(`Job ${id} schema validation failed after update, but still saving.`);
+        }
+
+        jobs[jobIndex] = updatedJob;
+        writeJobs(jobs);
+
+        return updatedJob;
+    } catch (e) {
+        console.warn(`Failed to update job ${id}:`, e);
+        return null;
     }
-
-    const updatedJob = {
-        ...jobs[jobIndex],
-        ...updates,
-        updatedAt: Date.now()
-    };
-
-    // Validate updated job using AJV before saving
-    const isValid = validateJob(updatedJob);
-    if (!isValid) {
-        console.warn(`Job ${id} schema validation failed after update, but still saving.`);
-        // Or throw error depending on strictness
-    }
-
-    jobs[jobIndex] = updatedJob;
-    writeJobs(jobs);
-
-    return updatedJob;
 }

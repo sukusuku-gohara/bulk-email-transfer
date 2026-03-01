@@ -5,10 +5,12 @@ import { fetchApi } from '@/lib/api';
 export default function Step2Ideation({
     jobId,
     ideationJson,
+    inputs,
     onNext
 }: {
     jobId: string,
     ideationJson: any,
+    inputs: any,
     onNext: (roughAssets: string[]) => void
 }) {
     const [loading, setLoading] = useState(false);
@@ -18,7 +20,12 @@ export default function Step2Ideation({
         setLoading(true);
         setError('');
         try {
-            const res = await fetchApi('/api/workflows/rough', { jobId });
+            const res = await fetchApi('/api/workflows/rough', {
+                jobId,
+                ideationJson,
+                bans: inputs?.bans,
+                referenceImage: inputs?.referenceImage
+            });
             onNext(res.roughAssets);
         } catch (err: any) {
             setError(err.message);
