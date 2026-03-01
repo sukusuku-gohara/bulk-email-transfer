@@ -1,14 +1,17 @@
 # AWS Lambda への移行ガイド
 
-GA4 日次レポートシステムを AWS Lambda で毎日9時に自動実行するための設定ガイドです。
+GA4 日次レポートシステムを AWS Lambda で毎日 9 時に自動実行するための設定ガイドです。
+
+✅ **動作確認済み手順**（2026年3月2日）
 
 ---
 
 ## 前提条件
 
-- AWS アカウントがあること
+- AWS アカウント（東京リージョン ap-northeast-1）
 - AWS コンソールへのアクセス権限
 - Google Cloud プロジェクト（GA4, GSC, Sheets API の認証情報）
+- ローカル環境：Python 3.12、Docker（グリッピーライブラリコンパイル用）
 
 ---
 
@@ -56,19 +59,54 @@ Lambda コンソール → コードエディタ → `lambda_function.py` の内
 
 ---
 
-## ステップ 3: コードをアップロード
+## ステップ 3: Lambda レイヤーの作成（依存パッケージ）
 
-### 3.1 デプロイメント ZIP を作成
+### 3.1 Linux x86_64 環境で依存パッケージをビルド
 
-ローカルで以下を実行：
+**重要：** MacBook/Linux などのローカル環境では、Lambda 環境（Linux x86_64）と互換性のあるバイナリが必要です。Docker を使用します：
 
 ```bash
 cd ~/AIproduct/Claude/ga4-kpi-batch
 
-# 必要なパッケージをインストール
-pip install -r requirements.txt -t python/
+# Linux x86_64 環境で pip install を実行
+docker run --rm --platform linux/amd64 \
+  -v "$(pwd):/workspace" \
+  -w /workspace \
+  python:3.12-slim \
+  bash -c "apt-get install -y zip -q 2>/dev/null && \
+           pip install -r requirements.txt -t python/ --no-cache-dir -q && \
+           zip -r lambda_layer.zip python/ -q"
 
-# ZIP ファイルを作成（Python モジュール + Lambda ハンドラー）
+# ファイルサイズを確認
+ls -lh lambda_layer.zip
+```
+
+**結果例：** `lambda_layer.zip: 31M`
+
+### 3.2 AWS Lambda でレイヤーを作成
+
+1. AWS Lambda コンソール → **左メニュー → レイヤー**
+2. **「レイヤーの作成」**をクリック
+
+| 項目 | 値 |
+|------|-----|
+| **レイヤー名** | `ga4-kpi-batch-amd64` |
+| **説明** | `Google Analytics/Sheets API 依存パッケージ` |
+| **互換性のあるランタイム** | `Python 3.12` |
+| **.zip ファイルをアップロード** | `lambda_layer.zip` を選択 |
+
+3. **「作成」**
+
+---
+
+## ステップ 4: コードをアップロード
+
+### 4.1 デプロイメント ZIP を作成（コードのみ）
+
+```bash
+cd ~/AIproduct/Claude/ga4-kpi-batch
+
+# コードファイルのみを ZIP 化（python/ ディレクトリは含めない）
 zip -r lambda_deployment.zip \
     lambda_handler.py \
     main.py \
@@ -76,20 +114,45 @@ zip -r lambda_deployment.zip \
     gsc_client.py \
     chatwork_client.py \
     report_builder.py \
-    sheets_client.py \
-    python/
+    sheets_client.py
 
-# ファイルサイズを確認（50MB 以下であること）
+# ファイルサイズを確認（50MB 以下）
 ls -lh lambda_deployment.zip
 ```
 
-### 3.2 ZIP をアップロード
+**結果例：** `lambda_deployment.zip: 23K`
 
-Lambda コンソール → コード → 「.zip ファイルをアップロード」 → `lambda_deployment.zip` を選択
+### 4.2 Lambda コンソールでコードをアップロード
+
+1. Lambda コンソール → **`ga4-kpi-batch` 関数**を開く
+2. **「コード」タブ** → **「ファイルをアップロード」**
+3. `lambda_deployment.zip` を選択 → **「デプロイ」**
+
+### 4.3 レイヤーを関数にアタッチ
+
+1. 同じ関数ページを下にスクロール → **「レイヤー」セクション**
+2. **「レイヤーを追加」**
+3. **「カスタムレイヤー」** → `ga4-kpi-batch-amd64` を選択
+4. **「追加」**
 
 ---
 
-## ステップ 4: Lambda 環境変数を設定
+## ステップ 5: Lambda 設定を調整
+
+### 5.1 メモリとタイムアウトを設定
+
+1. `ga4-kpi-batch` 関数 → **「設定」タブ** → **「一般設定」** → **「編集」**
+
+| 項目 | 値 |
+|------|-----|
+| **メモリ** | `512 MB`（128MB では不足） |
+| **タイムアウト** | `60 秒`（デフォルト 3 秒では不足） |
+
+2. **「保存」**
+
+---
+
+## ステップ 6: Lambda 環境変数を設定
 
 ### 方法 A: AWS CLI スクリプトで自動設定（推奨）
 
@@ -304,6 +367,33 @@ Task timed out after 5.00 seconds
 # AWS CLI でログを確認
 aws logs tail /aws/lambda/ga4-kpi-batch --follow
 ```
+
+---
+
+## ステップ 7: EventBridge で毎日 9 時の自動実行を設定
+
+### 7.1 EventBridge ルールを作成
+
+1. AWS コンソール → **EventBridge** → **ルール** → **「ルールを作成」**
+
+| 項目 | 値 |
+|------|-----|
+| **名前** | `ga4-kpi-batch-daily-9am` |
+| **説明** | `毎日 9:00 (JST) に GA4 レポートを実行` |
+| **ルールタイプ** | **スケジュール** |
+| **スケジュール式** | `cron(0 0 * * ? *)` |
+
+> **注記**: Lambda は UTC で実行されるため、JST 9:00 = UTC 0:00
+
+2. **「ターゲットを選択」** → **AWS Lambda**
+3. **関数** → `ga4-kpi-batch` を選択
+4. **「ルールを作成」**
+
+### 7.2 動作確認
+
+1. EventBridge ルール → **「テスト」** をクリック
+2. Lambda 関数が実行されることを確認
+3. Chatwork ルーム 421983199 にレポートが送信されたか確認
 
 ---
 

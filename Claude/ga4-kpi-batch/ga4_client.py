@@ -34,7 +34,7 @@ def run_report(
     将来 exchange_click / exchange_promo_view 等のイベント集計を追加する際は
     dimension_filter に FilterExpression を渡して利用する。
     """
-    client = BetaAnalyticsDataClient()
+    client = BetaAnalyticsDataClient(transport="rest")
 
     request = RunReportRequest(
         property=f"properties/{property_id}",

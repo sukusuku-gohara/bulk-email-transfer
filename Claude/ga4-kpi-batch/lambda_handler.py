@@ -66,7 +66,7 @@ def lambda_handler(event: dict, context: object) -> dict:
         dict: Lambda が期待するレスポンス形式 {statusCode, body}
     """
     logger.info("=== Lambda ハンドラー起動 ===")
-    logger.info("Request ID: %s", context.request_id if context else "N/A")
+    logger.info("Request ID: %s", context.aws_request_id if context else "N/A")
 
     try:
         # ── 1. Google 認証情報をセットアップ ───────────────────
