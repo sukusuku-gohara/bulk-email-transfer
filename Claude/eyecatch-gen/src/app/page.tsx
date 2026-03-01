@@ -34,9 +34,6 @@ export default function Home() {
                 />
               ))}
             </div>
-            <a href="/history" className="text-sm font-medium text-gray-400 hover:text-white transition">
-              履歴を見る
-            </a>
           </div>
         </div>
       </header>
