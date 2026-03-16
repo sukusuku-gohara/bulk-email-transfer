@@ -3,15 +3,14 @@
 ローカル実行:
     python main.py
 
-Cloud Run (HTTP):
-    POST /run で同じ処理を実行
+AWS Lambda:
+    lambda_handler.py から呼び出される
 """
 
 import logging
 import os
 import sys
 from datetime import date, timedelta
-from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from google.api_core.exceptions import PermissionDenied
 from google.auth.exceptions import DefaultCredentialsError
@@ -173,57 +172,19 @@ def run_daily_report() -> None:
     logger.info("=== GA4 日次レポート完了 ===")
 
 
-# ── Cloud Run 用 HTTP サーバ ──────────────────────────────────
-class ReportHandler(BaseHTTPRequestHandler):
-    """Cloud Scheduler → Cloud Run HTTP 用ハンドラ."""
-
-    def do_POST(self):  # noqa: N802
-        if self.path == "/run":
-            try:
-                run_daily_report()
-                self.send_response(200)
-                self.end_headers()
-                self.wfile.write(b"OK")
-            except Exception as e:
-                logger.exception("レポート実行失敗")
-                self.send_response(500)
-                self.end_headers()
-                self.wfile.write(f"ERROR: {e}".encode())
-        else:
-            self.send_response(404)
-            self.end_headers()
-
-    def do_GET(self):  # noqa: N802
-        """ヘルスチェック用."""
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"healthy")
-
-
-def serve() -> None:
-    """Cloud Run 用 HTTP サーバ起動."""
-    port = int(os.environ.get("PORT", "8080"))
-    server = HTTPServer(("0.0.0.0", port), ReportHandler)
-    logger.info("HTTP サーバ起動: port=%d", port)
-    server.serve_forever()
-
-
 # ── エントリーポイント ────────────────────────────────────────
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "--serve":
-        serve()
-    else:
-        try:
-            run_daily_report()
-        except DefaultCredentialsError as e:
-            logger.error("[認証エラー] サービスアカウントの認証情報が見つかりません: %s", e)
-            sys.exit(1)
-        except PermissionDenied as e:
-            logger.error("[権限エラー] GA4 プロパティへのアクセスが拒否されました: %s", e)
-            sys.exit(1)
-        except ChatworkError as e:
-            logger.error("[Chatwork送信エラー] %s", e)
-            sys.exit(1)
-        except Exception as e:
-            logger.error("[予期しないエラー] %s: %s", type(e).__name__, e)
-            sys.exit(1)
+    try:
+        run_daily_report()
+    except DefaultCredentialsError as e:
+        logger.error("[認証エラー] サービスアカウントの認証情報が見つかりません: %s", e)
+        sys.exit(1)
+    except PermissionDenied as e:
+        logger.error("[権限エラー] GA4 プロパティへのアクセスが拒否されました: %s", e)
+        sys.exit(1)
+    except ChatworkError as e:
+        logger.error("[Chatwork送信エラー] %s", e)
+        sys.exit(1)
+    except Exception as e:
+        logger.error("[予期しないエラー] %s: %s", type(e).__name__, e)
+        sys.exit(1)
