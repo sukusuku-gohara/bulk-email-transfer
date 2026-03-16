@@ -29,7 +29,7 @@ export async function POST(req: Request) {
             referenceImage = job.inputs.referenceImage;
         }
 
-        const { prompt, aspect_ratio } = finalPromptJson;
+        const { prompt, aspect_ratio, negative_prompt, seed, guidance } = finalPromptJson;
 
         // Call Gemini for final image using Nano Banana Pro (Gemini 3 Pro Image)
         // Include reference image (logo) to ensure it's incorporated
@@ -37,7 +37,10 @@ export async function POST(req: Request) {
         const finalAsset = await generateImage(prompt, {
             aspectRatio: aspect_ratio,
             model: 'gemini-3-pro-image-preview', // Nano Banana Pro for high quality
-            referenceImage: referenceImage
+            referenceImage: referenceImage,
+            negativePrompt: negative_prompt,
+            seed: seed ?? null,
+            guidance: guidance ?? null,
         });
 
         // Update Job (best-effort for history - may fail on different container)
