@@ -107,6 +107,8 @@ export interface ImageGenerationOptions {
     model?: string;
     aspectRatio?: '1:1' | '16:9' | '4:3' | '3:4' | '9:16';
     negativePrompt?: string;
+    seed?: number | null;
+    guidance?: number | null;
     referenceImage?: string; // base64 data URI for logo/reference
 }
 
@@ -118,17 +120,19 @@ export async function generateImage(
     // This model uses generateContent, not generateImages
     const model = options.model || 'gemini-2.5-flash-image';
 
-    // Build enhanced prompt with size and aspect ratio specifications
     const aspectRatio = options.aspectRatio || '16:9';
+
+    // Build prompt with aspect ratio and negative prompt
     let promptText = `Create an image with the following specifications:
-- Aspect ratio: ${aspectRatio} (STRICT REQUIREMENT)
-- Resolution: 1920x1080 pixels (STRICT REQUIREMENT)
+- Aspect ratio: ${aspectRatio}
 - Format: Horizontal/Landscape orientation
 
 Image description:
-${prompt}
+${prompt}`;
 
-IMPORTANT: The output image MUST be exactly ${aspectRatio} aspect ratio at 1920x1080 resolution.`;
+    if (options.negativePrompt) {
+        promptText += `\n\nNegative prompt (elements to strictly avoid): ${options.negativePrompt}`;
+    }
 
     // If reference image (logo) is provided, add instruction to incorporate it
     if (options.referenceImage) {
@@ -154,9 +158,18 @@ IMPORTANT: The output image MUST be exactly ${aspectRatio} aspect ratio at 1920x
         }
     }
 
+    // Build config: responseModalities ensures image output; seed for reproducibility
+    const config: Record<string, any> = {
+        responseModalities: ['TEXT', 'IMAGE'],
+    };
+    if (options.seed != null) {
+        config.seed = options.seed;
+    }
+
     const response = await ai.models.generateContent({
         model,
-        contents
+        contents,
+        config,
     });
 
     console.log('Image generation response:', JSON.stringify(response, null, 2));
