@@ -42,6 +42,7 @@ class Unsubscribe extends Model
         'email',
         'token',
         'unsubscribed_at',
+        'created_at',
     ];
 
     /**

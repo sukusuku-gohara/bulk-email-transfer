@@ -39,6 +39,7 @@ class CampaignRecipient extends Model
         'tracking_id',
         'status',
         'sent_at',
+        'created_at',
     ];
 
     /**

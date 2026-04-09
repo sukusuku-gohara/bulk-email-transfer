@@ -26,6 +26,7 @@ class CampaignRecipientFactory extends Factory
             'tracking_id'  => fake()->uuid(),
             'status'       => RecipientStatus::Pending,
             'sent_at'      => null,
+            'created_at'   => now(),
         ];
     }
 }
