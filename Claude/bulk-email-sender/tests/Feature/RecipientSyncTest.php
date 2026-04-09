@@ -23,7 +23,11 @@ class RecipientSyncTest extends TestCase
      */
     private function mockSpreadsheetService(array $recipients): void
     {
-        $mock = $this->createMock(SpreadsheetService::class);
+        // fetchRecipients のみモック（syncRecipients は実装をそのまま使う）
+        $mock = $this->getMockBuilder(SpreadsheetService::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['fetchRecipients'])
+            ->getMock();
         $mock->method('fetchRecipients')->willReturn($recipients);
         $this->app->instance(SpreadsheetService::class, $mock);
     }
@@ -82,7 +86,10 @@ class RecipientSyncTest extends TestCase
     /** @test */
     public function test_スプレッドシート取得失敗時にコマンドがFAILUREを返す(): void
     {
-        $mock = $this->createMock(SpreadsheetService::class);
+        $mock = $this->getMockBuilder(SpreadsheetService::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['fetchRecipients'])
+            ->getMock();
         $mock->method('fetchRecipients')->willThrowException(new \Exception('API error'));
         $this->app->instance(SpreadsheetService::class, $mock);
 

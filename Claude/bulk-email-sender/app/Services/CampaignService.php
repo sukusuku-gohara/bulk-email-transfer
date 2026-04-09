@@ -43,11 +43,13 @@ class CampaignService
         // スロットリング設定（1秒あたりの送信数）
         $ratePerSecond = config('bulkmail.send_rate_per_second', 2);
         $delaySeconds = 0;
+        // 送信順のカウンター（Eloquentコレクションのキーに依存しないよう独立したカウンターを使用）
+        $dispatchCount = 0;
 
         foreach ($recipients->chunk(100) as $chunk) {
-            foreach ($chunk as $index => $recipient) {
-                // N通ごとに1秒のディレイを加算
-                if ($index > 0 && $index % $ratePerSecond === 0) {
+            foreach ($chunk as $recipient) {
+                // N通ごとに1秒のディレイを加算（dispatchCountで正確にカウント）
+                if ($dispatchCount > 0 && $dispatchCount % $ratePerSecond === 0) {
                     $delaySeconds++;
                 }
 
@@ -63,6 +65,8 @@ class CampaignService
                 // ディレイ付きでジョブをディスパッチ
                 SendCampaignJob::dispatch($campaign, $campaignRecipient)
                     ->delay(now()->addSeconds($delaySeconds));
+
+                $dispatchCount++;
             }
         }
 

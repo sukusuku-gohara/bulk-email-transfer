@@ -19,29 +19,10 @@ class RecipientController extends Controller
     public function sync(SpreadsheetService $spreadsheetService)
     {
         try {
-            // recipients:sync コマンドと同じロジックをサービス経由で実行
-            $rows = $spreadsheetService->fetchRecipients();
-            $newCount = 0;
-            $updatedCount = 0;
-            $syncedAt = now();
-
-            foreach ($rows as $row) {
-                $recipient = Recipient::where('email', $row['email'])->first();
-                if ($recipient) {
-                    if (!$recipient->is_active) continue;
-                    $recipient->update(['name' => $row['name'], 'synced_at' => $syncedAt]);
-                    $updatedCount++;
-                } else {
-                    Recipient::create([
-                        'email' => $row['email'],
-                        'name' => $row['name'],
-                        'is_active' => true,
-                        'bounce_count' => 0,
-                        'synced_at' => $syncedAt,
-                    ]);
-                    $newCount++;
-                }
-            }
+            // 同期ロジックはSpreadsheetServiceに集約（RecipientsSyncCommandと共通）
+            $result = $spreadsheetService->syncRecipients();
+            $newCount = $result['new'];
+            $updatedCount = $result['updated'];
 
             return back()->with('success', "同期完了: 新規 {$newCount}件、更新 {$updatedCount}件");
         } catch (\Exception $e) {

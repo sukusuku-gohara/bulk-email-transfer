@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Recipient;
 use Google\Client;
 use Google\Service\Sheets;
 use Illuminate\Support\Facades\Log;
@@ -43,6 +44,54 @@ class SpreadsheetService
             ]);
             throw $e;
         }
+    }
+
+    /**
+     * スプレッドシートからデータを取得してreicipientsテーブルへ同期する
+     *
+     * @return array{new: int, updated: int, skipped: int}
+     * @throws \Exception API呼び出し失敗時
+     */
+    public function syncRecipients(): array
+    {
+        $rows = $this->fetchRecipients();
+
+        if (empty($rows)) {
+            return ['new' => 0, 'updated' => 0, 'skipped' => 0];
+        }
+
+        $syncedAt = now();
+        $newCount = 0;
+        $updatedCount = 0;
+        $skippedCount = 0;
+
+        foreach ($rows as $row) {
+            $email = $row['email'];
+            $name = $row['name'];
+
+            $recipient = Recipient::where('email', $email)->first();
+
+            if ($recipient) {
+                // バウンスで無効化されたアドレスは上書きしない
+                if (!$recipient->is_active) {
+                    $skippedCount++;
+                    continue;
+                }
+                $recipient->update(['name' => $name, 'synced_at' => $syncedAt]);
+                $updatedCount++;
+            } else {
+                Recipient::create([
+                    'email' => $email,
+                    'name' => $name,
+                    'is_active' => true,
+                    'bounce_count' => 0,
+                    'synced_at' => $syncedAt,
+                ]);
+                $newCount++;
+            }
+        }
+
+        return ['new' => $newCount, 'updated' => $updatedCount, 'skipped' => $skippedCount];
     }
 
     /**
