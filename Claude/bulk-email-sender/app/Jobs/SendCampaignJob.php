@@ -6,6 +6,7 @@ use App\Enums\RecipientStatus;
 use App\Mail\CampaignMail;
 use App\Models\Campaign;
 use App\Models\CampaignRecipient;
+use App\Services\BounceService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -29,7 +30,7 @@ class SendCampaignJob implements ShouldQueue
         public readonly CampaignRecipient $campaignRecipient,
     ) {}
 
-    public function handle(): void
+    public function handle(BounceService $bounceService): void
     {
         // 送信前に最新のステータスを確認（重複送信防止）
         $this->campaignRecipient->refresh();
@@ -50,6 +51,9 @@ class SendCampaignJob implements ShouldQueue
             // campaigns の送信済みカウントをインクリメント
             $this->campaign->increment('sent_count');
 
+            // 送信成功時: バウンスカウントをリセット
+            $bounceService->resetBounceCount($this->campaignRecipient);
+
         } catch (\Exception $e) {
             Log::error('メール送信失敗', [
                 'campaign_id' => $this->campaign->id,
@@ -58,10 +62,8 @@ class SendCampaignJob implements ShouldQueue
                 'error' => $e->getMessage(),
             ]);
 
-            // ステータスを failed に更新
-            $this->campaignRecipient->update([
-                'status' => RecipientStatus::Failed,
-            ]);
+            // バウンス記録（status更新 + bounce_count管理）
+            $bounceService->recordBounce($this->campaignRecipient);
 
             // campaigns の失敗カウントはbounced_countで管理（バウンス扱い）
             $this->campaign->increment('bounced_count');

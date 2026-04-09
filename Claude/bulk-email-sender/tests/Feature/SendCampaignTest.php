@@ -118,8 +118,8 @@ class SendCampaignTest extends TestCase
             'status' => RecipientStatus::Pending,
         ]);
 
-        // ジョブを直接実行
-        (new SendCampaignJob($campaign, $campaignRecipient))->handle();
+        // ジョブを直接実行（BounceService はサービスコンテナから解決）
+        (new SendCampaignJob($campaign, $campaignRecipient))->handle(app(\App\Services\BounceService::class));
 
         $this->assertEquals(RecipientStatus::Sent, $campaignRecipient->fresh()->status);
         $this->assertEquals(1, $campaign->fresh()->sent_count);
@@ -140,7 +140,7 @@ class SendCampaignTest extends TestCase
             'status' => RecipientStatus::Sent, // すでに送信済み
         ]);
 
-        (new SendCampaignJob($campaign, $campaignRecipient))->handle();
+        (new SendCampaignJob($campaign, $campaignRecipient))->handle(app(\App\Services\BounceService::class));
 
         // 冪等性: 再送信されない
         Mail::assertNotSent(CampaignMail::class);
