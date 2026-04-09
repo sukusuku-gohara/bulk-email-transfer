@@ -1,11 +1,15 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TrackingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+// 開封トラッキングピクセル（認証不要）
+Route::get('/track/{tracking_id}', [TrackingController::class, 'pixel'])->name('track.pixel');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
