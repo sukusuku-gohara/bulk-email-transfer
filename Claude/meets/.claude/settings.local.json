@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs php:*)",
+      "Bash(php:*)",
+      "Bash(mysql --version)",
+      "Bash(brew services:*)",
+      "Bash(mkdir -p \"$HOME/.local/bin\")",
+      "Bash(rm /tmp/composer-setup.php)",
+      "Bash(\"$HOME/.local/bin/composer\" --version)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(~/.local/bin/composer show:*)",
+      "Bash(~/.local/bin/composer require:*)",
+      "Bash(grep -n \"profile_status\\\\|->status\" /Users/kazuya/repos/AIProduct/Claude/meets/app/database/migrations/*member_profile*)",
+      "Bash(find /Users/kazuya/repos/AIProduct/Claude/meets/app/database/migrations -name *member_profile*)",
+      "Bash(grep -n \"reviewed_at\\\\|manually\" /Users/kazuya/repos/AIProduct/Claude/meets/app/database/migrations/*identity*)",
+      "Bash(find /Users/kazuya/repos/AIProduct/Claude/meets/app/database/migrations -name *onboarding*)",
+      "Bash(find /Users/kazuya/repos/AIProduct/Claude/meets/app/app/Http/Middleware -name *.php)",
+      "Bash(xargs ls:*)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(curl -s http://localhost/member/profile)",
+      "Bash(./vendor/bin/phpunit --filter=\"TempTest\" tests/Feature/Member/TempTest.php)",
+      "Bash(./vendor/bin/phpunit tests/Feature/Member/TempTest.php)",
+      "Bash(/dev/null:*)",
+      "Bash(xargs cat:*)",
+      "Bash(find /Users/kazuya/repos/AIProduct/Claude/meets/app/vendor -name Spreadsheet.php -path */PhpOffice/*)",
+      "Bash(git -C /Users/kazuya/repos/AIProduct/Claude/meets/app status --short)",
+      "Bash(git -C /Users/kazuya/repos/AIProduct/Claude/meets status)",
+      "Bash(git -C /Users/kazuya/repos/AIProduct/Claude/meets diff --stat HEAD~6 HEAD)",
+      "Bash(git -C /Users/kazuya/repos/AIProduct/Claude/meets status --short)",
+      "Bash(git -C /Users/kazuya/repos/AIProduct/Claude/meets log --oneline -3)",
+      "Bash(git -C /Users/kazuya/repos/AIProduct/Claude/meets diff --name-only)"
+    ]
+  }
+}

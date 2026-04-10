@@ -14,10 +14,12 @@ use Illuminate\Support\Str;
 
 class CampaignService
 {
+    public function __construct(private readonly SpreadsheetService $spreadsheetService) {}
+
     /**
      * キャンペーンの送信を開始する
      *
-     * 配信対象のアドレスを絞り込み、campaign_recipientsレコードを作成し、
+     * 選択したシートから受信者を取得し、campaign_recipientsレコードを作成して
      * スロットリングを考慮してJobをディスパッチする。
      */
     public function dispatch(Campaign $campaign): void
@@ -28,14 +30,27 @@ class CampaignService
             'sent_at' => now(),
         ]);
 
-        // 配信対象を絞り込む
-        // - is_active = true（バウンス超過で無効化されていない）
-        // - unsubscribesテーブルに含まれない（配信停止していない）
-        $unsubscribedEmails = Unsubscribe::pluck('email');
+        // 選択シートから受信者を取得
+        $sheetRows = $this->spreadsheetService->fetchRecipients($campaign->sheet_name);
 
-        $recipients = Recipient::where('is_active', true)
-            ->whereNotIn('email', $unsubscribedEmails)
-            ->get();
+        // 配信停止リストと非アクティブを除外
+        $unsubscribedEmails = Unsubscribe::pluck('email')->map(fn($e) => strtolower($e))->toArray();
+        $inactiveEmails = Recipient::where('is_active', false)->pluck('email')->map(fn($e) => strtolower($e))->toArray();
+        $excludedEmails = array_merge($unsubscribedEmails, $inactiveEmails);
+
+        $filteredRows = array_filter($sheetRows, fn($row) => !in_array($row['email'], $excludedEmails));
+        $filteredRows = array_values($filteredRows);
+
+        // Recipientレコードをupsert（存在しない場合は新規作成）
+        foreach ($filteredRows as $row) {
+            Recipient::firstOrCreate(
+                ['email' => $row['email']],
+                ['name' => $row['name'], 'is_active' => true, 'bounce_count' => 0]
+            );
+        }
+
+        $emails = array_column($filteredRows, 'email');
+        $recipients = Recipient::whereIn('email', $emails)->get();
 
         $total = $recipients->count();
         $campaign->update(['total_count' => $total]);

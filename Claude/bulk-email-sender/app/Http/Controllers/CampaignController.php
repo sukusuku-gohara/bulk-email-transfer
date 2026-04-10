@@ -31,8 +31,9 @@ class CampaignController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'subject'   => ['required', 'string', 'max:255'],
-            'body_html' => ['required', 'string'],
+            'subject'    => ['required', 'string', 'max:255'],
+            'body_html'  => ['required', 'string'],
+            'sheet_name' => ['required', 'string', 'max:100'],
         ]);
 
         $campaign = Campaign::create(array_merge($validated, ['status' => CampaignStatus::Draft]));

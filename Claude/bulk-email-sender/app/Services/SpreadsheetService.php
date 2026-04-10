@@ -23,12 +23,14 @@ class SpreadsheetService
     /**
      * スプレッドシートからメールアドレス一覧を取得する
      *
+     * @param string|null $sheetName シート名（省略時はconfig値を使用）
      * @return array{email: string, name: string|null}[]
      */
-    public function fetchRecipients(): array
+    public function fetchRecipients(?string $sheetName = null): array
     {
         $spreadsheetId = config('bulkmail.spreadsheet_id');
-        $range = config('bulkmail.spreadsheet_range');
+        $sheet = $sheetName ?? 'Sheet1';
+        $range = "{$sheet}!A:B";
 
         try {
             $response = $this->sheetsService->spreadsheets_values->get($spreadsheetId, $range);
@@ -36,7 +38,6 @@ class SpreadsheetService
 
             return $this->parseRows($rows);
         } catch (\Exception $e) {
-            // API呼び出し失敗時はログに残して例外を再スロー
             Log::error('Google Sheets API呼び出し失敗', [
                 'error' => $e->getMessage(),
                 'spreadsheet_id' => $spreadsheetId,

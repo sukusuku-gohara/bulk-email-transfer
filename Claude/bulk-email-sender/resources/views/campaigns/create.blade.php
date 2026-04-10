@@ -5,6 +5,7 @@
 <div x-data="{
     subject: '',
     bodyHtml: '',
+    sheetName: 'Sheet1',
     showConfirm: false,
     testEmail: '',
     showTestForm: false,
@@ -14,6 +15,16 @@
         <div class="w-1/2 space-y-4">
             <div class="bg-white rounded-lg shadow p-6 space-y-4">
                 <h2 class="font-semibold text-gray-700">メール内容</h2>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">送信先リスト（シート）</label>
+                    <select x-model="sheetName"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="Sheet1">Sheet1</option>
+                        <option value="Sheet2">Sheet2</option>
+                        <option value="Sheet3">Sheet3</option>
+                    </select>
+                </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">件名</label>
@@ -83,9 +94,9 @@
             <p class="text-gray-600 text-sm mb-4">
                 以下の内容で全配信先にメールを送信します。この操作は取り消せません。
             </p>
-            <div class="bg-gray-50 rounded p-3 text-sm mb-4">
-                <div class="text-gray-500">件名</div>
-                <div class="font-medium" x-text="subject"></div>
+            <div class="bg-gray-50 rounded p-3 text-sm mb-4 space-y-1">
+                <div><span class="text-gray-500">送信先:</span> <span class="font-medium" x-text="sheetName"></span></div>
+                <div><span class="text-gray-500">件名:</span> <span class="font-medium" x-text="subject"></span></div>
             </div>
             <div class="flex gap-3 justify-end">
                 <button type="button" @click="showConfirm = false"
@@ -96,6 +107,7 @@
                     @csrf
                     <input type="hidden" name="subject" :value="subject">
                     <input type="hidden" name="body_html" :value="bodyHtml">
+                    <input type="hidden" name="sheet_name" :value="sheetName">
                     <button type="submit" class="bg-red-600 text-white px-6 py-2 rounded-md text-sm hover:bg-red-700 font-semibold">
                         配信を開始する
                     </button>

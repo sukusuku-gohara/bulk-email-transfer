@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(composer --version)",
+      "Bash(php --version)",
+      "Read(//usr/local/bin/**)",
+      "Bash(php /Users/kazuya/Desktop/abcwallet/web-bswallet/composer.phar --version)",
+      "Read(//private/tmp/**)",
+      "Bash(curl -sS https://getcomposer.org/installer)",
+      "Bash(php -- --install-dir=/tmp --filename=composer)",
+      "Bash(/tmp/composer --version)",
+      "Bash(php /tmp/composer create-project laravel/laravel . --prefer-dist)",
+      "Bash(php /tmp/composer create-project laravel/laravel bulk-email-tmp --prefer-dist)",
+      "Bash(php /tmp/composer require laravel/breeze google/apiclient --no-interaction)",
+      "Bash(php artisan:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(php:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}

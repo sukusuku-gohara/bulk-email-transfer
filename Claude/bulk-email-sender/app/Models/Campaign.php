@@ -35,6 +35,7 @@ class Campaign extends Model
     protected $fillable = [
         'subject',
         'body_html',
+        'sheet_name',
         'status',
         'total_count',
         'sent_count',
