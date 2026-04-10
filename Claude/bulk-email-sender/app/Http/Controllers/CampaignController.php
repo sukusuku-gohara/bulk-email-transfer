@@ -73,12 +73,10 @@ class CampaignController extends Controller
     // 配信詳細
     public function show(Campaign $campaign)
     {
-        // 開封済み受信者一覧（open_logs が存在するもの）
-        $openedRecipients = CampaignRecipient::with('recipient')
+        $campaignRecipients = CampaignRecipient::with(['recipient', 'openLogs'])
             ->where('campaign_id', $campaign->id)
-            ->whereHas('openLogs')
             ->paginate(50);
 
-        return view('campaigns.show', compact('campaign', 'openedRecipients'));
+        return view('campaigns.show', compact('campaign', 'campaignRecipients'));
     }
 }
