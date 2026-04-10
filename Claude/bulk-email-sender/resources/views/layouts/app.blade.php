@@ -40,6 +40,10 @@
                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('unsubscribes.index') ? 'bg-indigo-900 text-white' : 'text-indigo-200 hover:bg-indigo-700' }}">
                     配信停止者
                 </a>
+                <a href="{{ route('failed-jobs.index') }}"
+                   class="flex items-center px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('failed-jobs.*') ? 'bg-indigo-900 text-white' : 'text-indigo-200 hover:bg-indigo-700' }}">
+                    失敗履歴
+                </a>
             </nav>
             <div class="px-4 py-4 border-t border-indigo-700">
                 <form method="POST" action="{{ route('logout') }}">

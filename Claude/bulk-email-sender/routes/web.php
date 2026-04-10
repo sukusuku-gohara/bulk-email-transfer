@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FailedJobController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecipientController;
 use App\Http\Controllers\TrackingController;
@@ -34,6 +35,11 @@ Route::middleware('auth')->group(function () {
 
     // 配信停止者一覧
     Route::get('/unsubscribes', [UnsubscribeController::class, 'index'])->name('unsubscribes.index');
+
+    // 失敗ジョブ履歴
+    Route::get('/failed-jobs', [FailedJobController::class, 'index'])->name('failed-jobs.index');
+    Route::delete('/failed-jobs/all', [FailedJobController::class, 'destroyAll'])->name('failed-jobs.destroy-all');
+    Route::delete('/failed-jobs/{id}', [FailedJobController::class, 'destroy'])->name('failed-jobs.destroy');
 
     // プロフィール（Breeze 標準）
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
