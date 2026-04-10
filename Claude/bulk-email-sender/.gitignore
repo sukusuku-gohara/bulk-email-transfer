@@ -26,3 +26,8 @@ Thumbs.db
 
 # Google サービスアカウント認証情報
 /storage/app/google/
+
+# 秘密鍵・機密ファイル
+AIが読み取ってはいけないフォルダ/
+*.pem
+*.key
