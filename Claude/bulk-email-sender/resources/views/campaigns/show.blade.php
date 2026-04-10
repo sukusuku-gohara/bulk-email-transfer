@@ -24,7 +24,18 @@
             {{ $statusLabel[$s] ?? $s }}
         </span>
     </div>
-    <div class="grid grid-cols-4 gap-4">
+
+    {{-- メール本文プレビュー --}}
+    <div x-data="{ open: false }" class="mt-4 border-t pt-4">
+        <button @click="open = !open" class="text-sm text-indigo-600 hover:underline">
+            <span x-text="open ? '本文を閉じる' : '本文を表示'"></span>
+        </button>
+        <div x-show="open" x-cloak class="mt-3 border rounded p-4 bg-gray-50 text-sm text-gray-700 max-h-96 overflow-y-auto">
+            {!! $campaign->body_html !!}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-4 gap-4 mt-4">
         <div class="text-center">
             <div class="text-2xl font-bold text-gray-700">{{ number_format($campaign->total_count) }}</div>
             <div class="text-xs text-gray-500">配信対象</div>
