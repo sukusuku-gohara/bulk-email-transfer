@@ -36,14 +36,45 @@ class TrackingController extends Controller
     }
 
     /**
+     * GoogleイメージプロキシなどのBotアクセスかどうかを判定する
+     */
+    private function isBot(Request $request): bool
+    {
+        $userAgent = $request->userAgent() ?? '';
+        $ip = $request->ip();
+
+        // ユーザーエージェントによる判定
+        $botPatterns = ['GoogleImageProxy', 'ggpht.com', 'Googlebot', 'bingbot', 'YandexBot'];
+        foreach ($botPatterns as $pattern) {
+            if (stripos($userAgent, $pattern) !== false) {
+                return true;
+            }
+        }
+
+        // GoogleのIPレンジによる判定
+        $googleRanges = ['66.249.', '74.125.', '209.85.', '64.233.', '72.14.'];
+        foreach ($googleRanges as $range) {
+            if (str_starts_with($ip, $range)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * 開封ログを記録し、初回のみ opened_count をインクリメントする
      */
     private function recordOpenLog(Request $request, string $trackingId): void
     {
+        // Googleプロキシなどのbotは除外
+        if ($this->isBot($request)) {
+            return;
+        }
+
         $campaignRecipient = CampaignRecipient::where('tracking_id', $trackingId)->first();
 
         if (!$campaignRecipient) {
-            // 存在しない tracking_id は記録せず返す
             return;
         }
 
