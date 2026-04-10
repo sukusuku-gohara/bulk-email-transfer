@@ -12,10 +12,10 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
         <!-- Scripts -->
-        @if(app()->environment('production') || file_exists(public_path('build/manifest.json')))
+        @if(file_exists(public_path('build/manifest.json')))
             @vite(['resources/css/app.css', 'resources/js/app.js'])
         @else
-            {{-- 開発/テスト環境: Tailwind CDN を使用 --}}
+            {{-- Viteビルド未実施時: Tailwind CDN を使用 --}}
             <script src="https://cdn.tailwindcss.com"></script>
         @endif
     </head>
