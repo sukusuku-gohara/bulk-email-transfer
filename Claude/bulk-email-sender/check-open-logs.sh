@@ -3,7 +3,7 @@
 
 php /var/www/bulk-email/Claude/bulk-email-sender/artisan tinker --execute="
 App\Models\OpenLog::select('ip_address', 'user_agent')
-    ->latest()
+    ->orderByDesc('opened_at')
     ->limit(10)
     ->get()
     ->each(function(\$log) {
