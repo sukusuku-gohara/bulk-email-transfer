@@ -1,0 +1,64 @@
+{
+  "name": "一斉メール定期配信",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "cron-node",
+      "name": "毎週月曜9時",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://bulk-mail.suku2.biz/api/campaigns/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer c7140142766bdb94e39d27a9b4439ae76f241c393118cc535964e0bfc7744a14"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "{\n  \"subject\": \"件名をここに入力\",\n  \"body_html\": \"<p>本文をここに入力</p>\",\n  \"sheet_name\": \"Sheet1\"\n}",
+        "options": {}
+      },
+      "id": "http-node",
+      "name": "メール配信API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    }
+  ],
+  "connections": {
+    "毎週月曜9時": {
+      "main": [
+        [
+          {
+            "node": "メール配信API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
