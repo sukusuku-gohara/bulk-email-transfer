@@ -18,4 +18,7 @@ return [
 
     // Google サービスアカウント認証情報ファイルのパス
     'google_credentials_path' => storage_path('app/google/credentials.json'),
+
+    // n8n連携用APIトークン
+    'api_token' => env('BULKMAIL_API_TOKEN'),
 ];
