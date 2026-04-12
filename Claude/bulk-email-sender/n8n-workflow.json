@@ -22,14 +22,16 @@
       "parameters": {
         "method": "POST",
         "url": "https://bulk-mail.suku2.biz/api/campaigns/send",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
               "value": "Bearer c7140142766bdb94e39d27a9b4439ae76f241c393118cc535964e0bfc7744a14"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
             }
           ]
         },
